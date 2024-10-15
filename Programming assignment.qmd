@@ -1,0 +1,94 @@
+---
+title: "Programming assignment"
+format: html
+editor: visual
+author: 
+  - name: "Florencia Bathory" 
+    email: bathory@demogr.mpg.de
+  - name: "Martina Bodo"
+    email: bodo@demogr.mpg.de
+lang: en
+date: "10/20/2024"
+date-format: long
+execute:
+  warning: false
+  message: false
+---
+
+  
+```{r}
+#| echo: false
+library(tidyverse)
+library(foreign)
+library(readstata13)
+library(kableExtra)
+# library("opendataformat")
+# path <- system.file("extdata", "data.zip", package="opendataformat")
+# ?read_opendf
+# df <- read_opendf(file = path)
+# docu_opendf(df$)
+```
+
+## Exercise 1
+
+### 1a. Load dataset
+
+```{r}
+db_soep <- read.dta("data/soep_lebensz_en.dta", convert.factors = FALSE)
+```
+
+### 1b. How many unique individuals are included in the practice data set?
+
+```{r}
+num <- length(unique(db_soep$id))
+
+print(paste0("There are ", num, " unique individuals in the data set"))
+```
+
+### 1c. Tabulate the number of observations per year.
+
+```{r}
+db_soep %>% 
+  group_by(year) %>% 
+  summarise(Observations = n()) %>% 
+  rename("Year" = year) %>% 
+  kbl() |> 
+  kable_classic_2(full_width = F, html_font = "Verdana") |> 
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+```
+
+### 1d. Proportion of females in the last year sample
+```{r}
+max(db_soep$year)
+
+```
+
+```{r}
+
+soep04 <-subset(x = db_soep,
+                subset = year == 2004)
+
+prop_female <- mean(soep04$sex == 1, na.rm = TRUE)
+
+print(paste0("The proportion of females in the 2004 sample is ", round(prop_female,3)))
+```
+The proportion of females in the 2004 sample is `{r}round(prop_female,3)`
+
+### Find if the average subjective health higher for men or for women
+
+```{r}
+# by(data=soep04$health_org,
+#    INDICES=soep04$sex,
+#    FUN=mean)
+
+sub_health <- soep04 %>% 
+  group_by(sex) %>% 
+  summarise("Subjective health" = round(mean(health_org),2)) %>% 
+  mutate(sex = case_when(sex == 0 ~ "Male",
+                         sex == 1 ~ "Female")) %>% 
+  rename("Sex" = sex)
+
+sub_health
+
+print(paste0("There is a slight difference between average subjective health higher between men and women. We found that average subjective health for men is ", round(sub_health$`Subjective health`[1]-sub_health$`Subjective health`[2],2), " higher than women's"))
+```
